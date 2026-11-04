@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pixel Data SIM Switcher</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        pixel: {
+                            bg: '#121318',
+                            surface: '#1b1b22',
+                            surfaceVariant: '#2b2938',
+                            primary: '#a8c7fa',
+                            primaryContainer: '#004a77',
+                            onPrimary: '#003152',
+                            secondary: '#7fcfff',
+                            tertiary: '#e0bbf8',
+                            tertiaryContainer: '#573b6c',
+                            cardBg: 'rgba(255, 255, 255, 0.05)',
+                            cardBorder: 'rgba(255, 255, 255, 0.1)',
+                            accentGreen: '#a6eebe',
+                            accentOrange: '#ffb787',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Google Sans', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .pixel-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .material-pill {
+            border-radius: 9999px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .material-chip {
+            border-radius: 16px;
+            transition: all 0.2s ease;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-pixel-bg text-gray-100 min-h-screen flex flex-col justify-between pb-6">
+
+    <!-- Top Status Bar & App Header -->
+    <header class="w-full max-w-md mx-auto pt-6 px-4">
+        <!-- System Status Bar Simulation -->
+        <div class="flex justify-between items-center text-xs text-gray-400 mb-4 px-2">
+            <span id="system-time" class="font-medium tracking-wide">09:41</span>
+            <div class="flex items-center space-x-2">
+                <span id="status-network-type" class="font-semibold text-pixel-primary">5G</span>
+                <i id="status-signal-icon" class="fas fa-signal text-pixel-primary"></i>
+                <i class="fas fa-wifi text-gray-400"></i>
+                <i class="fas fa-battery-full text-gray-300"></i>
+            </div>
+        </div>
+
+        <!-- App Bar -->
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    <i class="fas fa-sim-card text-pixel-primary"></i> Data SIM Switcher
+                </h1>
+                <p class="text-xs text-gray-400">Pixel 10 Pro XL • Android 16 System Tool</p>
+            </div>
+            <button id="add-sim-btn" class="material-pill px-3 py-1.5 bg-pixel-surfaceVariant hover:bg-opacity-80 text-pixel-primary text-xs font-semibold flex items-center gap-1.5 border border-pixel-cardBorder">
+                <i class="fas fa-plus"></i> Add SIM
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-md mx-auto px-4 flex-1 space-y-5">
+
+        <!-- Active Data SIM Live Card -->
+        <div class="pixel-card rounded-3xl p-5 relative overflow-hidden shadow-2xl border border-pixel-primary/30">
+            <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-pixel-primaryContainer/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <span class="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 bg-pixel-primary/20 text-pixel-primary rounded-full">
+                        ACTIVE DATA CONNECTION
+                    </span>
+                    <h2 id="active-sim-name" class="text-2xl font-bold mt-2 text-white">SIM 1 - Personal</h2>
+                    <p id="active-carrier" class="text-xs text-gray-300 font-medium flex items-center gap-1.5">
+                        <i class="fas fa-tower-cell text-pixel-accentGreen"></i> Google Fi • 5G Ultra Wideband
+                    </p>
+                </div>
+                <div class="text-right">
+                    <span id="active-signal-badge" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> Connected
+                    </span>
+                </div>
+            </div>
+
+            <!-- Usage Progress Bar -->
+            <div class="space-y-1.5 mb-4">
+                <div class="flex justify-between text-xs text-gray-300">
+                    <span>Monthly Data Used</span>
+                    <span id="active-usage-text" class="font-semibold text-white">4.2 GB / 15 GB</span>
+                </div>
+                <div class="w-full bg-gray-800 rounded-full h-2.5 overflow-hidden">
+                    <div id="active-usage-bar" class="bg-gradient-to-r from-pixel-primary to-pixel-secondary h-2.5 rounded-full transition-all duration-500" style="width: 28%"></div>
+                </div>
+                <div class="flex justify-between text-[11px] text-gray-400">
+                    <span>Resets in 12 days</span>
+                    <span id="active-usage-percent">28% used</span>
+                </div>
+            </div>
+
+            <!-- Quick Action Row -->
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
+                <button id="toggle-data-btn" class="py-2.5 px-3 rounded-2xl bg-pixel-primary text-pixel-onPrimary text-xs font-bold flex items-center justify-center gap-2 shadow-md hover:brightness-110 active:scale-95 transition">
+                    <i class="fas fa-mobile-screen-button"></i> <span id="toggle-data-label">Mobile Data ON</span>
+                </button>
+                <button id="quick-switch-btn" class="py-2.5 px-3 rounded-2xl bg-pixel-surfaceVariant text-white text-xs font-bold flex items-center justify-center gap-2 border border-pixel-cardBorder hover:bg-white/10 active:scale-95 transition">
+                    <i class="fas fa-arrows-rotate"></i> Quick Switch Data
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex bg-pixel-surface p-1 rounded-2xl border border-pixel-cardBorder text-xs font-medium">
+            <button id="tab-sims" class="flex-1 py-2 text-center rounded-xl bg-pixel-primaryContainer text-white font-semibold shadow transition">
+                <i class="fas fa-microchip mr-1"></i> SIM Profiles
+            </button>
+            <button id="tab-tile" class="flex-1 py-2 text-center text-gray-400 hover:text-white rounded-xl transition">
+                <i class="fas fa-border-all mr-1"></i> QS Tile
+            </button>
+            <button id="tab-automation" class="flex-1 py-2 text-center text-gray-400 hover:text-white rounded-xl transition">
+                <i class="fas fa-bolt mr-1"></i> Automate
+            </button>
+        </div>
+
+        <!-- TAB CONTENT 1: SIM PROFILES MANAGEMENT -->
+        <section id="content-sims" class="space-y-3">
+            <div class="flex justify-between items-center px-1">
+                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Configured SIM Cards</span>
+                <span id="sim-count" class="text-xs text-pixel-primary bg-pixel-primaryContainer/40 px-2 py-0.5 rounded-full">2 Profiles</span>
+            </div>
+
+            <!-- SIM List Container -->
+            <div id="sim-list" class="space-y-3">
+                <!-- Dynamic Content Rendered Here -->
+            </div>
+        </section>
+
+        <!-- TAB CONTENT 2: QUICK SETTINGS TILE SIMULATOR -->
+        <section id="content-tile" class="hidden space-y-4">
+            <div class="pixel-card p-4 rounded-3xl space-y-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fas fa-sliders text-pixel-primary"></i> Android 16 Quick Settings Tile Preview
+                </h3>
+                <p class="text-xs text-gray-300">
+                    Interact with your simulated Quick Settings tile below to quickly switch default mobile data SIM from your notification shade.
+                </p>
+
+                <!-- Simulated Android Quick Settings Panel -->
+                <div class="bg-black/60 p-4 rounded-2xl border border-white/10 shadow-inner">
+                    <div class="text-[11px] text-gray-400 mb-2 font-mono">SWIPE DOWN PANEL SIMULATION</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- Internet Tile -->
+                        <div class="bg-pixel-primaryContainer/80 text-white p-3 rounded-2xl flex items-center justify-between border border-pixel-primary/40 cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-wifi text-lg text-pixel-primary"></i>
+                                <div>
+                                    <div class="text-xs font-bold">Internet</div>
+                                    <div class="text-[10px] text-gray-300">Google Fi 5G</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom SIM Switcher Tile -->
+                        <div id="qs-tile-trigger" class="bg-pixel-surfaceVariant hover:bg-pixel-primaryContainer p-3 rounded-2xl flex items-center justify-between border border-pixel-primary/40 cursor-pointer transition-all active:scale-95">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-pixel-primary text-pixel-onPrimary flex items-center justify-center font-bold text-xs">
+                                    S1
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="text-xs font-bold truncate">Data SIM</div>
+                                    <div id="qs-tile-label" class="text-[10px] text-pixel-primary font-semibold truncate">SIM 1 Personal</div>
+                                </div>
+                            </div>
+                            <i class="fas fa-repeat text-xs text-pixel-primary"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-pixel-surface p-3 rounded-xl border border-white/5 text-xs text-gray-300 space-y-2">
+                    <div class="font-semibold text-white flex items-center gap-1.5">
+                        <i class="fas fa-circle-info text-pixel-primary"></i> How to add to your Pixel 10 Pro XL:
+                    </div>
+                    <ol class="list-decimal list-inside space-y-1 text-gray-400 pl-1 text-[11px]">
+                        <li>Swipe down twice from top of screen to expand Quick Settings.</li>
+                        <li>Tap the <i class="fas fa-pen text-xs px-1"></i> Edit icon.</li>
+                        <li>Drag <strong>"Tasker SIM Switcher"</strong> into active tiles.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB CONTENT 3: AUTOMATION ROUTINES WIZARD -->
+        <section id="content-automation" class="hidden space-y-4">
+            <div class="pixel-card p-4 rounded-3xl space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i class="fas fa-robot text-pixel-tertiary"></i> SIM Switch Rules Engine
+                    </h3>
+                    <span class="text-[10px] bg-pixel-tertiaryContainer text-pixel-tertiary px-2 py-0.5 rounded-full font-bold">Automated</span>
+                </div>
+                <p class="text-xs text-gray-300">
+                    Automatically change active data SIM based on location, Wi-Fi status, or time schedule using Android system intents.
+                </p>
+
+                <!-- Trigger Rule Selector -->
+                <div class="space-y-2 pt-1">
+                    <label class="text-xs font-semibold text-gray-400">Select Automation Recipe</label>
+                    <select id="automation-preset-select" class="w-full bg-pixel-surface border border-white/10 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-pixel-primary">
+                        <option value="home-wifi">Home Wi-Fi Disconnect ➔ Switch to SIM 2 (Travel/Work)</option>
+                        <option value="geofence">Arrive at Office ➔ Force Work SIM Data</option>
+                        <option value="schedule">Daily at 08:00 AM ➔ Activate Work SIM</option>
+                        <option value="data-cap">Data Limit Exceeded ➔ Auto Failover to Backup SIM</option>
+                    </select>
+                </div>
+
+                <!-- Code / Logic Preview Box -->
+                <div class="bg-black/80 rounded-2xl p-3 border border-white/10 relative font-mono text-[11px]">
+                    <div class="flex justify-between items-center pb-2 mb-2 border-b border-white/10 text-gray-400">
+                        <span id="script-type-label" class="text-pixel-primary font-semibold">MacroDroid / Tasker Command</span>
+                        <button id="copy-script-btn" class="text-xs text-pixel-primary hover:text-white px-2 py-0.5 rounded bg-white/5">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <pre id="script-code-block" class="text-gray-300 overflow-x-auto whitespace-pre-wrap leading-relaxed">
+// Trigger: Disconnected from Home_WiFi
+// Action: Switch preferred data subscription ID to SIM 2
+service call phone 28 i32 2
+am broadcast -a android.intent.action.DATA_DEFAULT_SIM_CHANGED --ei subscription 2
+                    </pre>
+                </div>
+
+                <!-- Step-by-Step Setup Guide -->
+                <div class="space-y-2 pt-2">
+                    <div class="text-xs font-bold text-white">Setup Instructions for Tasker / MacroDroid</div>
+                    <div id="automation-steps" class="space-y-2 text-xs text-gray-300">
+                        <!-- Step items rendered dynamically -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Action Bar / Toast System -->
+    <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-pixel-surfaceVariant border border-pixel-primary text-white text-xs px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300 z-50">
+        <i id="toast-icon" class="fas fa-circle-check text-pixel-accentGreen"></i>
+        <span id="toast-msg">Action performed successfully</span>
+    </div>
+
+    <!-- MODAL: ADD / EDIT SIM -->
+    <div id="sim-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none transition-all duration-300 z-50">
+        <div class="bg-pixel-surface border border-pixel-cardBorder w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl transform translate-y-full sm:translate-y-0 transition-all duration-300">
+            <div class="flex justify-between items-center pb-2 border-b border-white/10">
+                <h3 id="modal-title" class="text-base font-bold text-white">Add New SIM Profile</h3>
+                <button id="close-modal-btn" class="text-gray-400 hover:text-white p-1">
+                    <i class="fas fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="sim-form" class="space-y-3">
+                <input type="hidden" id="modal-sim-id">
+                
+                <div>
+                    <label class="text-xs font-medium text-gray-300 block mb-1">SIM Label Name</label>
+                    <input type="text" id="modal-sim-name" required placeholder="e.g. Work eSIM, Travel SIM" class="w-full bg-pixel-bg border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pixel-primary">
+                </div>
+
+                <div>
+                    <label class="text-xs font-medium text-gray-300 block mb-1">Carrier Name</label>
+                    <input type="text" id="modal-sim-carrier" required placeholder="e.g. Google Fi, T-Mobile, Verizon" class="w-full bg-pixel-bg border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pixel-primary">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-medium text-gray-300 block mb-1">SIM Type</label>
+                        <select id="modal-sim-type" class="w-full bg-pixel-bg border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pixel-primary">
+                            <option value="eSIM">eSIM (Digital)</option>
+                            <option value="Physical SIM">Physical SIM</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-gray-300 block mb-1">Network Type</label>
+                        <select id="modal-sim-network" class="w-full bg-pixel-bg border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pixel-primary">
+                            <option value="5G">5G Ultra</option>
+                            <option value="LTE">LTE / 4G</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-medium text-gray-300 block mb-1">Used Data (GB)</label>
+                        <input type="number" step="0.1" id="modal-sim-used" required placeholder="4.2" class="w-full bg-pixel-bg border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pixel-primary">
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-gray-300 block mb-1">Data Cap (GB)</label>
+                        <input type="number" step="1" id="modal-sim-cap" required placeholder="15" class="w-full bg-pixel-bg border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pixel-primary">
+                    </div>
+                </div>
+
+                <div class="pt-3 flex gap-2">
+                    <button type="button" id="delete-sim-btn" class="hidden flex-1 py-2.5 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold hover:bg-rose-500/30 transition">
+                        Delete
+                    </button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-pixel-primary text-pixel-onPrimary text-xs font-bold hover:brightness-110 transition">
+                        Save SIM Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        // --- Application State ---
+        const DEFAULT_SIMS = [
+            {
+                id: 'sim_1',
+                name: 'SIM 1 - Personal',
+                carrier: 'Google Fi',
+                type: 'Physical SIM',
+                network: '5G',
+                usedGB: 4.2,
+                capGB: 15,
+                color: 'from-blue-500 to-indigo-600',
+                active: true
+            },
+            {
+                id: 'sim_2',
+                name: 'SIM 2 - Work',
+                carrier: 'T-Mobile eSIM',
+                type: 'eSIM',
+                network: '5G',
+                usedGB: 18.5,
+                capGB: 50,
+                color: 'from-purple-500 to-pink-600',
+                active: false
+            },
+            {
+                id: 'sim_3',
+                name: 'SIM 3 - Travel eSIM',
+                carrier: 'Airalo / Orange',
+                type: 'eSIM',
+                network: 'LTE',
+                usedGB: 1.1,
+                capGB: 5,
+                color: 'from-emerald-500 to-teal-600',
+                active: false
+            }
+        ];
+
+        let state = {
+            sims: [],
+            mobileDataEnabled: true,
+            selectedPreset: 'home-wifi'
+        };
+
+        // Preset Script Recipes
+        const PRESETS = {
+            'home-wifi': {
+                label: 'MacroDroid Intent Action',
+                code: `// Trigger: Wi-Fi Disconnected from "Home_Network"\n// Action: Switch Mobile Data SIM to SIM 2\nIntent Action: android.intent.action.DATA_DEFAULT_SIM_CHANGED\nExtra 1 (integer): subscription = 2\nExecute Shell Command: service call phone 28 i32 2`,
+                steps: [
+                    'Open <strong>MacroDroid</strong> ➔ Add Macro.',
+                    'Add Trigger: <em>Wi-Fi State Changed ➔ Disconnected</em>.',
+                    'Add Action: <em>Option ➔ Send Intent / Shell Script</em>.',
+                    'Paste the generated intent subscription command above.'
+                ]
+            },
+            'geofence': {
+                label: 'Tasker Location Recipe',
+                code: `// Profile: Location -> Work Office (Radius 200m)\n// Enter Task:\n1. Mobile Data -> Off\n2. Shell Command -> service call phone 28 i32 2 (SIM 2)\n3. Mobile Data -> On\n4. Flash "Data Switched to Work SIM"`,
+                steps: [
+                    'Open <strong>Tasker</strong> ➔ Create a new Profile.',
+                    'Select <em>Location Trigger</em> ➔ Pick your Work Office on GPS map.',
+                    'Link to a new Task: <em>Code ➔ Run Shell Command</em>.',
+                    'Input the SIM switch command and test trigger.'
+                ]
+            },
+            'schedule': {
+                label: 'Time-based Automated Intent',
+                code: `// Trigger: Weekdays at 08:00 AM\n// Action: Set Default Data SIM to SIM 2 (Work)\nam broadcast -a android.intent.action.DATA_DEFAULT_SIM_CHANGED --ei subscription 2`,
+                steps: [
+                    'Set a time trigger in MacroDroid/Tasker for 08:00 AM (Mon-Fri).',
+                    'Add system broadcast action with subscription ID parameter.',
+                    'Add secondary trigger at 05:00 PM to auto-switch back to SIM 1.'
+                ]
+            },
+            'data-cap': {
+                label: 'Failover Script Logic',
+                code: `// Trigger: System Data Limit Warning Broadcast\nif (active_sim_data_used >= data_cap) {\n    switch_default_data_sim(next_available_sim_id);\n    send_notification("Primary SIM Cap Exceeded. Backup SIM Activated!");\n}`,
+                steps: [
+                    'Configure Tasker variable monitoring data usage threshold.',
+                    'When threshold reaches 100%, run failover switch script.',
+                    'Sends a persistent system notification confirming SIM rollover.'
+                ]
+            }
+        };
+
+        // --- Core Functions ---
+
+        function initApp() {
+            // Load state from localStorage if exists
+            const saved = localStorage.getItem('pixel_sim_switcher_state');
+            if (saved) {
+                try {
+                    state = JSON.parse(saved);
+                } catch(e) {
+                    state.sims = DEFAULT_SIMS;
+                }
+            } else {
+                state.sims = DEFAULT_SIMS;
+            }
+
+            // Realtime system time update
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Bind Event Listeners
+            bindEvents();
+
+            // Render UI
+            renderAll();
+        }
+
+        function saveState() {
+            localStorage.setItem('pixel_sim_switcher_state', JSON.stringify(state));
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('system-time').textContent = `${hours}:${minutes}`;
+        }
+
+        function getActiveSIM() {
+            return state.sims.find(sim => sim.active) || state.sims[0];
+        }
+
+        function renderAll() {
+            renderActiveSIMCard();
+            renderSIMList();
+            renderQuickSettingsTile();
+            renderAutomation();
+        }
+
+        function renderActiveSIMCard() {
+            const active = getActiveSIM();
+            if (!active) return;
+
+            document.getElementById('active-sim-name').textContent = active.name;
+            document.getElementById('active-carrier').innerHTML = `
+                <i class="fas fa-tower-cell text-pixel-accentGreen"></i> ${active.carrier} • ${active.network}
+            `;
+
+            document.getElementById('status-network-type').textContent = active.network;
+
+            // Update usage bar
+            const percent = Math.min(Math.round((active.usedGB / active.capGB) * 100), 100);
+            document.getElementById('active-usage-text').textContent = `${active.usedGB} GB / ${active.capGB} GB`;
+            document.getElementById('active-usage-percent').textContent = `${percent}% used`;
+            document.getElementById('active-usage-bar').style.width = `${percent}%`;
+
+            // Mobile Data Toggle button state
+            const toggleBtn = document.getElementById('toggle-data-btn');
+            const toggleLabel = document.getElementById('toggle-data-label');
+            const signalBadge = document.getElementById('active-signal-badge');
+            const statusIcon = document.getElementById('status-signal-icon');
+
+            if (state.mobileDataEnabled) {
+                toggleBtn.className = "py-2.5 px-3 rounded-2xl bg-pixel-primary text-pixel-onPrimary text-xs font-bold flex items-center justify-center gap-2 shadow-md hover:brightness-110 active:scale-95 transition";
+                toggleLabel.textContent = "Mobile Data ON";
+                signalBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                signalBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> Connected`;
+                statusIcon.className = "fas fa-signal text-pixel-primary";
+            } else {
+                toggleBtn.className = "py-2.5 px-3 rounded-2xl bg-gray-800 text-gray-400 text-xs font-bold flex items-center justify-center gap-2 border border-white/10 hover:bg-gray-700 active:scale-95 transition";
+                toggleLabel.textContent = "Mobile Data OFF";
+                signalBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-400 border border-rose-500/30";
+                signalBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400 mr-1.5"></span> Disconnected`;
+                statusIcon.className = "fas fa-signal text-gray-600";
+            }
+        }
+
+        function renderSIMList() {
+            const container = document.getElementById('sim-list');
+            container.innerHTML = '';
+
+            document.getElementById('sim-count').textContent = `${state.sims.length} Profiles`;
+
+            state.sims.forEach((sim, index) => {
+                const percent = Math.min(Math.round((sim.usedGB / sim.capGB) * 100), 100);
+                const isOverCap = sim.usedGB >= sim.capGB;
+
+                const card = document.createElement('div');
+                card.className = `pixel-card p-4 rounded-2xl transition-all duration-200 border ${
+                    sim.active ? 'border-pixel-primary bg-pixel-primaryContainer/20 shadow-lg' : 'border-white/5 hover:border-white/20'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl ${
+                                sim.active ? 'bg-pixel-primary text-pixel-onPrimary' : 'bg-pixel-surfaceVariant text-gray-300'
+                            } flex items-center justify-center font-bold text-sm shadow-inner">
+                                <i class="fas fa-sim-card"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-sm font-bold text-white">${sim.name}</h4>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-gray-300">${sim.type}</span>
+                                </div>
+                                <p class="text-xs text-gray-400">${sim.carrier} • ${sim.network}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="editSIM('${sim.id}')" class="p-2 text-gray-400 hover:text-white text-xs">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button onclick="switchSIM('${sim.id}')" class="material-pill px-3 py-1.5 text-xs font-semibold ${
+                                sim.active 
+                                ? 'bg-pixel-primary text-pixel-onPrimary cursor-default' 
+                                : 'bg-pixel-surfaceVariant text-pixel-primary hover:bg-pixel-primaryContainer border border-pixel-cardBorder'
+                            }">
+                                ${sim.active ? '<i class="fas fa-check mr-1"></i> Active' : 'Switch Data'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mini usage statistics -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[11px] text-gray-400">
+                            <span>Data Used</span>
+                            <span class="${isOverCap ? 'text-rose-400 font-bold' : 'text-gray-300'}">${sim.usedGB} GB / ${sim.capGB} GB (${percent}%)</span>
+                        </div>
+                        <div class="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                            <div class="${isOverCap ? 'bg-rose-500' : 'bg-pixel-primary'} h-1.5 rounded-full" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderQuickSettingsTile() {
+            const active = getActiveSIM();
+            const label = document.getElementById('qs-tile-label');
+            if (active) {
+                label.textContent = active.name;
+            }
+        }
+
+        function renderAutomation() {
+            const presetKey = state.selectedPreset || 'home-wifi';
+            const preset = PRESETS[presetKey];
+            if (!preset) return;
+
+            document.getElementById('script-type-label').textContent = preset.label;
+            document.getElementById('script-code-block').textContent = preset.code;
+
+            const stepsContainer = document.getElementById('automation-steps');
+            stepsContainer.innerHTML = '';
+            preset.steps.forEach((step, i) => {
+                const item = document.createElement('div');
+                item.className = "flex items-start gap-2 text-xs text-gray-300";
+                item.innerHTML = `
+                    <span class="w-5 h-5 rounded-full bg-pixel-surfaceVariant text-pixel-primary font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">${i+1}</span>
+                    <p class="pt-0.5">${step}</p>
+                `;
+                stepsContainer.appendChild(item);
+            });
+        }
+
+        // --- Interaction Handlers ---
+
+        function switchSIM(id) {
+            const target = state.sims.find(s => s.id === id);
+            if (!target || target.active) return;
+
+            // Switch active states
+            state.sims.forEach(s => s.active = (s.id === id));
+            saveState();
+
+            // Visual feedback simulation
+            showToast(`Switched mobile data connection to ${target.name}`, 'fa-repeat');
+            renderAll();
+        }
+
+        function showToast(message, icon = 'fa-circle-check') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.textContent = message;
+            toastIcon.className = `fas ${icon} text-pixel-accentGreen`;
+
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        function openSIMModal(simId = null) {
+            const modal = document.getElementById('sim-modal');
+            const deleteBtn = document.getElementById('delete-sim-btn');
+            const modalTitle = document.getElementById('modal-title');
+
+            if (simId) {
+                const sim = state.sims.find(s => s.id === simId);
+                if (!sim) return;
+                modalTitle.textContent = "Edit SIM Profile";
+                document.getElementById('modal-sim-id').value = sim.id;
+                document.getElementById('modal-sim-name').value = sim.name;
+                document.getElementById('modal-sim-carrier').value = sim.carrier;
+                document.getElementById('modal-sim-type').value = sim.type;
+                document.getElementById('modal-sim-network').value = sim.network;
+                document.getElementById('modal-sim-used').value = sim.usedGB;
+                document.getElementById('modal-sim-cap').value = sim.capGB;
+                deleteBtn.classList.remove('hidden');
+            } else {
+                modalTitle.textContent = "Add New SIM Profile";
+                document.getElementById('sim-form').reset();
+                document.getElementById('modal-sim-id').value = '';
+                deleteBtn.classList.add('hidden');
+            }
+
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100');
+            modal.firstElementChild.classList.remove('translate-y-full');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('sim-modal');
+            modal.firstElementChild.classList.add('translate-y-full');
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function bindEvents() {
+            // Tab Switchers
+            const tabSims = document.getElementById('tab-sims');
+            const tabTile = document.getElementById('tab-tile');
+            const tabAuto = document.getElementById('tab-automation');
+
+            const contentSims = document.getElementById('content-sims');
+            const contentTile = document.getElementById('content-tile');
+            const contentAuto = document.getElementById('content-automation');
+
+            function setActiveTab(activeBtn, activeContent) {
+                [tabSims, tabTile, tabAuto].forEach(b => {
+                    b.className = "flex-1 py-2 text-center text-gray-400 hover:text-white rounded-xl transition";
+                });
+                [contentSims, contentTile, contentAuto].forEach(c => c.classList.add('hidden'));
+
+                activeBtn.className = "flex-1 py-2 text-center rounded-xl bg-pixel-primaryContainer text-white font-semibold shadow transition";
+                activeContent.classList.remove('hidden');
+            }
+
+            tabSims.addEventListener('click', () => setActiveTab(tabSims, contentSims));
+            tabTile.addEventListener('click', () => setActiveTab(tabTile, contentTile));
+            tabAuto.addEventListener('click', () => setActiveTab(tabAuto, contentAuto));
+
+            // Data Toggle Button
+            document.getElementById('toggle-data-btn').addEventListener('click', () => {
+                state.mobileDataEnabled = !state.mobileDataEnabled;
+                saveState();
+                renderActiveSIMCard();
+                showToast(`Mobile Data ${state.mobileDataEnabled ? 'Enabled' : 'Disabled'}`, state.mobileDataEnabled ? 'fa-signal' : 'fa-ban');
+            });
+
+            // Quick Switch Button
+            document.getElementById('quick-switch-btn').addEventListener('click', () => {
+                if (state.sims.length <= 1) return;
+                const activeIndex = state.sims.findIndex(s => s.active);
+                const nextIndex = (activeIndex + 1) % state.sims.length;
+                switchSIM(state.sims[nextIndex].id);
+            });
+
+            // Quick Settings Tile Trigger
+            document.getElementById('qs-tile-trigger').addEventListener('click', () => {
+                if (state.sims.length <= 1) return;
+                const activeIndex = state.sims.findIndex(s => s.active);
+                const nextIndex = (activeIndex + 1) % state.sims.length;
+                switchSIM(state.sims[nextIndex].id);
+            });
+
+            // Automation Preset Dropdown
+            document.getElementById('automation-preset-select').addEventListener('click', (e) => {
+                state.selectedPreset = e.target.value;
+                renderAutomation();
+            });
+
+            // Script Copy Button
+            document.getElementById('copy-script-btn').addEventListener('click', () => {
+                const code = document.getElementById('script-code-block').textContent;
+                navigator.clipboard.writeText(code).then(() => {
+                    showToast('Automation script copied to clipboard', 'fa-copy');
+                }).catch(() => {
+                    // Fallback
+                    const textarea = document.createElement('textarea');
+                    textarea.value = code;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showToast('Automation script copied to clipboard', 'fa-copy');
+                });
+            });
+
+            // Modal Trigger Buttons
+            document.getElementById('add-sim-btn').addEventListener('click', () => openSIMModal());
+            document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+
+            // SIM Form Submit
+            document.getElementById('sim-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const id = document.getElementById('modal-sim-id').value;
+                const name = document.getElementById('modal-sim-name').value;
+                const carrier = document.getElementById('modal-sim-carrier').value;
+                const type = document.getElementById('modal-sim-type').value;
+                const network = document.getElementById('modal-sim-network').value;
+                const usedGB = parseFloat(document.getElementById('modal-sim-used').value) || 0;
+                const capGB = parseFloat(document.getElementById('modal-sim-cap').value) || 10;
+
+                if (id) {
+                    // Update existing
+                    const index = state.sims.findIndex(s => s.id === id);
+                    if (index !== -1) {
+                        state.sims[index] = { ...state.sims[index], name, carrier, type, network, usedGB, capGB };
+                    }
+                } else {
+                    // Create new
+                    const newId = 'sim_' + Date.now();
+                    state.sims.push({
+                        id: newId,
+                        name,
+                        carrier,
+                        type,
+                        network,
+                        usedGB,
+                        capGB,
+                        active: state.sims.length === 0
+                    });
+                }
+
+                saveState();
+                renderAll();
+                closeModal();
+                showToast(id ? 'SIM profile updated' : 'New SIM profile added');
+            });
+
+            // Delete SIM Button
+            document.getElementById('delete-sim-btn').addEventListener('click', () => {
+                const id = document.getElementById('modal-sim-id').value;
+                if (!id) return;
+
+                const isDeletingActive = state.sims.find(s => s.id === id)?.active;
+                state.sims = state.sims.filter(s => s.id !== id);
+
+                if (isDeletingActive && state.sims.length > 0) {
+                    state.sims[0].active = true;
+                }
+
+                saveState();
+                renderAll();
+                closeModal();
+                showToast('SIM profile deleted', 'fa-trash');
+            });
+        }
+
+        // Global functions for inline handlers
+        window.switchSIM = switchSIM;
+        window.editSIM = (id) => openSIMModal(id);
+
+        // Run App
+        window.onload = initApp;
+    </script>
+</body>
+</html>
