@@ -823,5 +823,10 @@ am broadcast -a android.intent.action.DATA_DEFAULT_SIM_CHANGED --ei subscription
         // Run App
         window.onload = initApp;
     </script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
+</script>
 </body>
 </html>
